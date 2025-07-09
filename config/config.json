@@ -1,0 +1,11 @@
+{
+    "threshold": 127,
+    "图像二值化阈值": 127,
+    "Debug_Mode":"video",
+    "Debug_Picture_Path":"../../res/samples/sample1.jpg",
+    "Debug_Video_Path":"../../res/samples/sample.mp4",
+    "Image_Width":320,
+    "Image_Height":240,
+    "Border":2,
+    "Start_Line":3
+}
