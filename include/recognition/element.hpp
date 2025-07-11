@@ -22,18 +22,31 @@ enum class Scene
 class Element
 {
 public:
-    Element();
-    ~Element();
-
-    Scene Recognition_Element(Tracking &tracking);
-
-private:
-    Scene scene;    // 场景
+    uint8_t _crossroad_cnt;   // 十字帧计数  
+    uint8_t _ring_cnt;        // 环岛帧计数
+    uint8_t _bridge_cnt;      // 坡道帧计数
+    uint8_t _obstaclee_cnt;   // 障碍帧计数
+    uint8_t _zebra_cnt;       // 斑马线帧计数
     bool _crossroad_flag;   // 十字标志位  
     bool _ring_flag;        // 环岛标志位
     bool _bridge_flag;      // 坡道标志位
     bool _obstaclee_flag;   // 障碍标志位
     bool _zebra_flag;       // 斑马线标志位
+
+
+
+
+    Element();
+    ~Element();
+
+    Scene Recognition_Element(Tracking &tracking);
+    void Draw_Edge(Tracking &tracking);
+
+private:
+    Scene scene;    // 场景
+    std::vector<common::POINT> _crossroad_left_line;   // 十字左补线
+    std::vector<common::POINT> _crossroad_right_line;  // 十字右补线
+
 };
 
 }

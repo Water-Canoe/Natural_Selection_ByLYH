@@ -24,3 +24,13 @@
 git remote add origin https://github.com/Water-Canoe/Natural_Selection_ByLYH.git
 git branch -M main
 git push -u origin main
+
+
+# 1. 添加所有更改到暂存区
+git add .
+
+# 2. 提交更改（添加有意义的提交信息）
+git commit -m "你的提交信息"
+
+# 3. 推送到GitHub
+git push origin main

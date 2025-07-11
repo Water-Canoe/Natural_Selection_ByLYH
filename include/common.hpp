@@ -14,3 +14,6 @@
 
 // 显示管理
 #include "common/display.hpp"
+
+// 调试和性能监控管理
+#include "common/debug.hpp"

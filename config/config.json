@@ -7,5 +7,7 @@
     "Image_Width":320,
     "Image_Height":240,
     "Border":2,
-    "Start_Line":3
+    "Start_Line":3,
+    "Print_Mode":false
+
 }

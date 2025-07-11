@@ -143,20 +143,56 @@ float Slope_Point_To_Point(const POINT& p1, const POINT& p2)
 
 std::vector<POINT>  Link_Point_To_Point(const POINT& p1,const POINT& p2)
 {
-    double slope = Slope_Point_To_Point(p1,p2);
-    POINT p3(p1);
-    if(p1.y > p2.y)
-    {
-        p3 = p1;
+    std::vector<POINT> points;
+    
+    // 计算两点间的距离
+    int dx = p2.x - p1.x;
+    int dy = p2.y - p1.y;
+    
+    // 如果两点重合，直接返回
+    if (dx == 0 && dy == 0) {
+        points.push_back(p1);
+        return points;
     }
-    std::vector<POINT> point;
-    point.push_back(p1);
-    for(int i = 0; i < abs(p1.y - p2.y); i++)
-    {
-        point[i].y = p3.y + i;
-        point[i].x = (float)(p3.x + i / slope);
+    
+    // 确定步长方向
+    int step_x = (dx > 0) ? 1 : (dx < 0) ? -1 : 0;
+    int step_y = (dy > 0) ? 1 : (dy < 0) ? -1 : 0;
+    
+    // 使用Bresenham算法绘制直线
+    int x = p1.x;
+    int y = p1.y;
+    
+    // 添加起点
+    points.push_back(POINT(x, y));
+    
+    // 如果x方向距离更大，以x为步长
+    if (abs(dx) >= abs(dy)) {
+        int error = 2 * abs(dy) - abs(dx);
+        for (int i = 0; i < abs(dx); i++) {
+            x += step_x;
+            if (error >= 0) {
+                y += step_y;
+                error -= 2 * abs(dx);
+            }
+            error += 2 * abs(dy);
+            points.push_back(POINT(x, y));
+        }
+    } else {
+        // 如果y方向距离更大，以y为步长
+        int error = 2 * abs(dx) - abs(dy);
+        for (int i = 0; i < abs(dy); i++) {
+            y += step_y;
+            if (error >= 0) {
+                x += step_x;
+                error -= 2 * abs(dy);
+            }
+            error += 2 * abs(dx);
+            points.push_back(POINT(x, y));
+        }
     }
-    return point;
+    
+    return points;
 }
 
 

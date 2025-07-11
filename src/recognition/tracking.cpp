@@ -15,7 +15,6 @@ using namespace std;
  *   |               |
  * (0,height-1) -- (width-1,height-1)
  *   y
- * 注意：OpenCV中y轴向下为正方向
  */
 
 namespace recognition{
@@ -208,7 +207,7 @@ void Tracking::Track_Recognition()
     // 寻找起点，如果失败则退出
     while(!Find_Start_Point(start_line))
     {
-        cout << "未找到起点， 重新寻找" << endl;
+        debug << "未找到起点， 重新寻找" << endl;
         start_line += 5;
         if(start_line > _height / 2)
             return;
@@ -238,7 +237,7 @@ void Tracking::Track_Recognition()
            l_point.y <= 0 || l_point.y >= _camera.Get_Binary_Frame().rows - 1 ||
            r_point.x <= 0 || r_point.x >= _camera.Get_Binary_Frame().cols - 1 || 
            r_point.y <= 0 || r_point.y >= _camera.Get_Binary_Frame().rows - 1) {
-            cout << "越界，退出循环" << endl;
+            debug << "越界，退出循环" << endl;
             break;
         }
         
@@ -295,7 +294,6 @@ void Tracking::Track_Recognition()
         //         {
         //             _corner_right_down = l_history_dir[l_step].first;
         //         }
-
         //     }
         //     if(l_history_dir[l_step].second == 0 
         //         && l_history_dir[l_step - 1].second == 1
@@ -306,9 +304,7 @@ void Tracking::Track_Recognition()
         //         {
         //             _corner_right_up = l_history_dir[l_step].first;
         //         }
-
         //     }
-            
         // }
         // =========================================== 右边线巡线逻辑 =======================================
         if(r_front_value == BLACK)
@@ -370,7 +366,7 @@ void Tracking::Track_Recognition()
         // 转向次数限制：防止在复杂路径中陷入循环
         if(l_turn > 3 || r_turn > 3)
         {
-            cout << "转向次数过多，退出循环" << endl;
+            debug << "转向次数过多，退出循环" << endl;
             break;
         }
         // 到达图像顶部，退出循环
@@ -378,19 +374,19 @@ void Tracking::Track_Recognition()
         {
             if(l_point.x == _width / 2 || r_point.x == _width / 2)
             {
-                cout << "中线，退出循环" << endl;
+                debug << "中线，退出循环" << endl;
                 break;
             }
         }
         // 两点相遇，退出循环
         if(l_point.x == r_point.x && l_point.y == r_point.y) 
         {
-            cout << "两点相遇，退出循环" << endl;
+            debug << "两点相遇，退出循环" << endl;
             break;
         }
         if(l_step > STEP_MAX || r_step > STEP_MAX)
         {
-            cout << "步数过多，退出循环" << endl;
+            debug << "步数过多，退出循环" << endl;
             break;
         }
     }
@@ -468,13 +464,13 @@ void Tracking::Edge_Extract()
                     _corner_left_down = _edge_left[current_idx - 1];
                 }
                 // 记录左上角点
-                if(_edge_left[current_idx].slope < -1.2
-                    && (_edge_left[current_idx - 2].slope > -0.5 || _edge_left[current_idx - 2].slope == -255)
-                    && abs(_edge_left[current_idx].slope) != 255
-                    && _edge_left[current_idx - 2].slope != 0
-                    && _edge_left[current_idx - 2].y < _height - 50
-                    && _corner_left_up.x == 0)
+                if((_edge_left[current_idx].slope < -0.8 && _edge_left[current_idx].slope > -2.0)
+                    && (_edge_left[current_idx - 2].slope > -0.3 &&  abs(_edge_left[current_idx - 2].slope) != 255)
+                    && _edge_left[current_idx - 2].slope != 0 
+                    && _edge_left[current_idx - 2].y < _height - 50 && _corner_left_up.x == 0)
                 {
+                    debug << "左上斜率" << _edge_left[current_idx].slope << endl;
+                    debug << "左上-2斜率" << _edge_left[current_idx - 2].slope << endl;
                     _corner_left_up = _edge_left[current_idx - 2];
                 }
 
@@ -520,13 +516,16 @@ void Tracking::Edge_Extract()
                     _corner_right_down = _edge_right[current_idx - 1];
                 }
                 // 记录右上角点
-                if(_edge_right[current_idx].slope > 1.2
-                    && (_edge_right[current_idx - 2].slope < 0.5 || _edge_right[current_idx - 2].slope == -255)
+                if(_edge_right[current_idx].slope > 0.8 && _edge_right[current_idx].slope < 2.0
+                    && (_edge_right[current_idx - 2].slope < 0.3)
                     && _edge_right[current_idx - 2].slope != 0
                     && abs(_edge_right[current_idx].slope) != 255
-                    && _edge_right[current_idx - 2].y < _height - 100
+                    && abs(_edge_right[current_idx - 2].slope) != 255
+                    && _edge_right[current_idx - 2].y < _height - 50
                     && _corner_right_up.x == 0)
                 {
+                    debug << "右上斜率" << _edge_right[current_idx].slope << endl;
+                    debug << "右上-2斜率" << _edge_right[current_idx - 2].slope << endl;
                     _corner_right_up = _edge_right[current_idx - 2];
                 }
             }
@@ -543,68 +542,80 @@ void Tracking::Edge_Extract()
     }
     stdev_edge_left = Variance<double, vector<double>>(l_slope);
     stdev_edge_right = Variance<double, vector<double>>(r_slope);
-    cout << "左边缘点方差：" << stdev_edge_left << endl;
-    cout << "右边缘点方差：" << stdev_edge_right << endl;
-    cout << "宽度：" << _width_block[_height/2] << endl;
+    debug << "左边缘点方差：" << stdev_edge_left << std::endl;
+    debug << "右边缘点方差：" << stdev_edge_right << std::endl;
+    debug << "宽度：" << _width_block[_height/2] << std::endl;
 }
 
 
-/**
- * @brief 绘制边缘点
- * 
- * 功能说明：
- * 在图像上绘制提取到的边缘点，用于可视化调试。
- * 左边缘点用蓝色圆圈表示，右边缘点用红色圆圈表示。
- * 
- * 调试用途：
- * - 验证边缘检测的准确性
- * - 观察赛道识别的效果
- * - 分析算法性能
- */
-void Tracking::Draw_Edge()
-{
-    // 绘制左边缘点（蓝色）
-    for(size_t i = 0; i < _edge_left.size();i++)
-    {
-        cv::circle(_draw_frame,
-                   cv::Point(_edge_left[i].x,_edge_left[i].y),
-                   1,  // 圆圈半径
-                   cv::Scalar(255,0,0),  // 蓝色 (B,G,R)
-                   -1);  // 实心圆
-    }
+// /**
+//  * @brief 绘制边缘点
+//  * 
+//  * 功能说明：
+//  * 在图像上绘制提取到的边缘点，用于可视化调试。
+//  * 左边缘点用蓝色圆圈表示，右边缘点用红色圆圈表示。
+//  * 
+//  * 调试用途：
+//  * - 验证边缘检测的准确性
+//  * - 观察赛道识别的效果
+//  * - 分析算法性能
+//  */
+// void Tracking::Draw_Edge()
+// {
+//     // 绘制左边缘点（蓝色）
+//     for(size_t i = 0; i < _edge_left.size();i++)
+//     {
+//         cv::circle(_draw_frame,
+//                    cv::Point(_edge_left[i].x,_edge_left[i].y),
+//                    1,  // 圆圈半径
+//                    cv::Scalar(255,0,0),  // 蓝色 (B,G,R)
+//                    -1);  // 实心圆
+//     }
     
-    // 绘制右边缘点（红色）
-    for(size_t i = 0; i < _edge_right.size();i++)
-    {
-        cv::circle(_draw_frame,
-                   cv::Point(_edge_right[i].x,_edge_right[i].y),
-                   1,  // 圆圈半径
-                   cv::Scalar(0,0,255),  // 红色 (B,G,R)
-                   -1);  // 实心圆
-    }
-    cv::circle(_draw_frame,
-               cv::Point(_corner_left_down.x,_corner_left_down.y),
-               2,  // 圆圈半径
-               cv::Scalar(0,255,0),  // 绿色 (B,G,R)
-               -1);  // 实心圆
-    cv::circle(_draw_frame,
-               cv::Point(_corner_right_down.x,_corner_right_down.y),
-               2,  // 圆圈半径
-               cv::Scalar(0,255,0),  // 绿色 (B,G,R)
-               -1);  // 实心圆
-    cv::circle(_draw_frame,
-               cv::Point(_corner_left_up.x,_corner_left_up.y),
-               2,  // 圆圈半径
-               cv::Scalar(0,255,255),  // 绿色 (B,G,R)
-               -1);  // 实心圆
-    cv::circle(_draw_frame,
-               cv::Point(_corner_right_up.x,_corner_right_up.y),
-               2,  // 圆圈半径
-               cv::Scalar(0,255,255),  // 绿色 (B,G,R)
-               -1);  // 实心圆
-    cout << "左边斜率：" << _edge_left[_height/2].slope << endl;
-    cout << "右边斜率：" << _edge_right[_height/2].slope << endl;
-}
+//     // 绘制右边缘点（红色）
+//     for(size_t i = 0; i < _edge_right.size();i++)
+//     {
+//         cv::circle(_draw_frame,
+//                    cv::Point(_edge_right[i].x,_edge_right[i].y),
+//                    1,  // 圆圈半径
+//                    cv::Scalar(0,0,255),  // 红色 (B,G,R)
+//                    -1);  // 实心圆
+//     }
+
+//     // 绘制十字补线
+//     for(size_t i = 0; i < _crossroad_left_line.size();i++)
+//     {
+//         cv::line(_draw_frame,
+//                    cv::Point(_crossroad_left_line[i].x,_crossroad_left_line[i].y),
+//                    cv::Point(_crossroad_right_line[i].x,_crossroad_right_line[i].y),
+//                    cv::Scalar(0,255,255),  // 绿色 (B,G,R)
+//                    -1);  // 实心圆
+//     }
+
+//     // 绘制角点
+//     cv::circle(_draw_frame,
+//                cv::Point(_corner_left_down.x,_corner_left_down.y),
+//                2,  // 圆圈半径
+//                cv::Scalar(0,255,0),  // 绿色 (B,G,R)
+//                -1);  // 实心圆
+//     cv::circle(_draw_frame,
+//                cv::Point(_corner_right_down.x,_corner_right_down.y),
+//                2,  // 圆圈半径
+//                cv::Scalar(0,255,0),  // 绿色 (B,G,R)
+//                -1);  // 实心圆
+//     cv::circle(_draw_frame,
+//                cv::Point(_corner_left_up.x,_corner_left_up.y),
+//                2,  // 圆圈半径
+//                cv::Scalar(0,255,255),  // 绿色 (B,G,R)
+//                -1);  // 实心圆
+//     cv::circle(_draw_frame,
+//                cv::Point(_corner_right_up.x,_corner_right_up.y),
+//                2,  // 圆圈半径
+//                cv::Scalar(0,255,255),  // 绿色 (B,G,R)
+//                -1);  // 实心圆
+//     debug << "左边斜率：" << _edge_left[_height/2].slope << std::endl;
+//     debug << "右边斜率：" << _edge_right[_height/2].slope << std::endl;
+// }
 
 
 }

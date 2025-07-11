@@ -49,6 +49,10 @@ struct POINT
     POINT& operator=(const POINT& point){x = point.x, y = point.y, slope = point.slope;return *this;}
 };
 
+
+
+
+
 // enum class JUNCTION_TYPE
 // {
 //     L_UP,   //左侧上拐点——上、左

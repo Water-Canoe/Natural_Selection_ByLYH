@@ -27,7 +27,7 @@ public:
     bool Find_Start_Point(int scan_start_y = 3, int scan_height = 10);
     void Track_Recognition();
     void Edge_Extract();
-    void Draw_Edge();
+    //void Draw_Edge();
 
     // 公共访问方法，用于获取处理结果
     const std::vector<common::POINT>& Get_Maze_Edge_Left() const { return _maze_edge_left; }
