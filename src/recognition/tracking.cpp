@@ -70,15 +70,38 @@ void Tracking::Picture_Process()
     
     // 步骤2：图像处理
     _camera.Resize_Frame(_width,_height);
-    _camera.Frame_Process();
-    _draw_frame = _camera.Get_Frame().clone();
     
-    // 步骤3：添加边框(2个像素的黑色边框)
+    // 检查图像处理是否成功
+    if(!_camera.Frame_Process())
+    {
+        std::cerr << "图像处理失败" << std::endl;
+        return;
+    }
+    
+    // 获取原始帧并检查是否为空
+    cv::Mat original_frame = _camera.Get_Frame();
+    if(original_frame.empty())
+    {
+        std::cerr << "原始图像为空，无法创建绘制帧" << std::endl;
+        return;
+    }
+    
+    _draw_frame = original_frame.clone();
+    
+    // 步骤3：添加边框(_border个像素的黑色边框)
     // 边框的作用：防止边缘检测时越界，同时提供边界参考
-    cv::rectangle(_camera.Get_Binary_Frame(),
-        cv::Point(0,0),
-        cv::Point(_camera.Get_Binary_Frame().cols,_camera.Get_Binary_Frame().rows),
-        cv::Scalar(0,0,0),_border);
+    cv::Mat binary_frame = _camera.Get_Binary_Frame();
+    if(!binary_frame.empty())
+    {
+        cv::rectangle(binary_frame,
+            cv::Point(0,0),
+            cv::Point(binary_frame.cols, binary_frame.rows),
+            cv::Scalar(0,0,0), _border);
+    }
+    else
+    {
+        std::cerr << "二值化图像为空，无法添加边框" << std::endl;
+    }
 }
 
 
@@ -90,25 +113,54 @@ void Tracking::Picture_Process()
  */
 bool Tracking::Find_Start_Point(int scan_start_y, int scan_height)
 {
+    // 检查二值化图像是否可用
+    cv::Mat binary_frame = _camera.Get_Binary_Frame();
+    if(binary_frame.empty())
+    {
+        debug << "二值化图像为空，无法寻找起点" << std::endl;
+        return false;
+    }
+    
+    // 检查图像尺寸
+    if(binary_frame.cols <= 0 || binary_frame.rows <= 0)
+    {
+        debug << "二值化图像尺寸无效" << std::endl;
+        return false;
+    }
+    
     std::vector<int> lefts, rights;
     int y_base = _height - scan_start_y; // 从底部向上
+    
+    // 检查扫描范围是否有效
+    if(y_base < 0 || y_base >= binary_frame.rows)
+    {
+        debug << "扫描起始位置无效: y_base=" << y_base << ", rows=" << binary_frame.rows << std::endl;
+        return false;
+    }
 
     for(int offset = 0; offset < scan_height; ++offset) 
     {
         int y = y_base - offset;
+        
+        // 检查y坐标是否在有效范围内
+        if(y < 0 || y >= binary_frame.rows)
+        {
+            continue; // 跳过无效行
+        }
+        
         int left = -1, right = -1;
-        bool in_white = false;
+        // bool in_white = false;  // 暂时注释掉未使用的变量
 
         // 从左到右扫描，找到第一个白色像素
-        for(int x = 0; x < _width ; ++x) {
-            if(_camera.Get_Binary_Frame().at<uchar>(y, x) == WHITE) {
+        for(int x = 0; x < binary_frame.cols; ++x) {
+            if(binary_frame.at<uchar>(y, x) == WHITE) {
                 left = x;
                 break;
             }
         }
         // 从右到左扫描，找到第一个白色像素
-        for(int x = _width - 1; x >= 0; --x) {
-            if(_camera.Get_Binary_Frame().at<uchar>(y, x) == WHITE) {
+        for(int x = binary_frame.cols - 1; x >= 0; --x) {
+            if(binary_frame.at<uchar>(y, x) == WHITE) {
                 right = x;
                 break;
             }
@@ -121,7 +173,7 @@ bool Tracking::Find_Start_Point(int scan_start_y, int scan_height)
     }
 
     // 统计多行结果，取中位数/均值
-    if(lefts.size() >= scan_height / 2 && rights.size() >= scan_height / 2) {
+    if(lefts.size() >= static_cast<size_t>(scan_height / 2) && rights.size() >= static_cast<size_t>(scan_height / 2)) {
         std::sort(lefts.begin(), lefts.end());
         std::sort(rights.begin(), rights.end());
         int left_pt = lefts[lefts.size()/2];
@@ -131,12 +183,16 @@ bool Tracking::Find_Start_Point(int scan_start_y, int scan_height)
         _maze_edge_left.push_back({left_pt, y_pt});
         _maze_edge_right.push_back({right_pt, y_pt});
 
-        cv::circle(_draw_frame,cv::Point(_maze_edge_left[0].x,_maze_edge_left[0].y),5,cv::Scalar(0,0,255),-1);
-        cv::circle(_draw_frame,cv::Point(_maze_edge_right[0].x,_maze_edge_right[0].y),5,cv::Scalar(255,0,0),-1);
+        // 检查绘制帧是否可用
+        if(!_draw_frame.empty())
+        {
+            cv::circle(_draw_frame,cv::Point(_maze_edge_left[0].x,_maze_edge_left[0].y),5,cv::Scalar(0,0,255),-1);
+            cv::circle(_draw_frame,cv::Point(_maze_edge_right[0].x,_maze_edge_right[0].y),5,cv::Scalar(255,0,0),-1);
+        }
 
         return true;
     } else {
-        std::cerr << "未找到有效的赛道起点！" << std::endl;
+        debug << "未找到有效的赛道起点！" << std::endl;
         return false;
     }
 }
@@ -433,10 +489,11 @@ void Tracking::Edge_Extract()
             _edge_left.push_back(l_heighest_point);
             l_height++;
             
-            // 计算斜率（从第二个点开始）
-            if(l_height > 4)
+            // 计算斜率、角点（从第8个点开始）
+            if(l_height > 8)
             {
                 int current_idx = l_height - 1;
+                // ============================================斜率计算========================================
                 // 计算当前点与前三个点之间的斜率
                 temp_slope1 = Slope_Point_To_Point(_edge_left[current_idx],_edge_left[current_idx-2]);
                 temp_slope2 = Slope_Point_To_Point(_edge_left[current_idx],_edge_left[current_idx-4]);
@@ -455,7 +512,8 @@ void Tracking::Edge_Extract()
                     _edge_left[current_idx].slope = temp_slope2;
                     l_slope.push_back(_edge_left[current_idx].slope);
                 }
-
+                // ============================================角点记录========================================
+                // 角点计算方法一——基于斜率：
                 // 记录左下角点
                 if(_edge_left[current_idx].slope > 0 
                     && abs(_edge_left[current_idx].slope) != 255 
@@ -463,24 +521,13 @@ void Tracking::Edge_Extract()
                 {
                     _corner_left_down = _edge_left[current_idx - 1];
                 }
-                // 记录左上角点
-                if((_edge_left[current_idx].slope < -0.8 && _edge_left[current_idx].slope > -2.0)
-                    && (_edge_left[current_idx - 2].slope > -0.3 &&  abs(_edge_left[current_idx - 2].slope) != 255)
-                    && _edge_left[current_idx - 2].slope != 0 
-                    && _edge_left[current_idx - 2].y < _height - 50 && _corner_left_up.x == 0)
-                {
-                    debug << "左上斜率" << _edge_left[current_idx].slope << endl;
-                    debug << "左上-2斜率" << _edge_left[current_idx - 2].slope << endl;
-                    _corner_left_up = _edge_left[current_idx - 2];
-                }
-
             }
             else
             {
                 _edge_left[l_height-1].slope = 0.0f;
             }
         }
-        // ========== 右线边缘点提取 ==========
+        // =========================================== 右线边缘点提取 =========================================
         // 检查当前点是否比已记录的最高点更高
         if(_maze_edge_right[i].y < r_heighest_point.y)
         {
@@ -488,10 +535,10 @@ void Tracking::Edge_Extract()
             _edge_right.push_back(r_heighest_point);
             r_height++;
             
-            // 计算斜率
-            if(r_height > 4)
-            {
+            // 计算斜率、角点
+            if(r_height > 8)            {
                 int current_idx = r_height - 1;
+                // ============================================斜率计算========================================
                 temp_slope1 = Slope_Point_To_Point(_edge_right[current_idx],_edge_right[current_idx-2]);
                 temp_slope2 = Slope_Point_To_Point(_edge_right[current_idx],_edge_right[current_idx-4]);
                 if(abs(temp_slope1) != 255 && abs(temp_slope2) != 255)
@@ -507,7 +554,7 @@ void Tracking::Edge_Extract()
                     _edge_right[current_idx].slope = temp_slope2;
                     r_slope.push_back(_edge_right[current_idx].slope);
                 }
-
+                // ============================================角点记录========================================
                 // 记录右下角点
                 if(_edge_right[current_idx].slope < 0 
                     && abs(_edge_right[current_idx].slope) != 255 
@@ -515,19 +562,7 @@ void Tracking::Edge_Extract()
                 {
                     _corner_right_down = _edge_right[current_idx - 1];
                 }
-                // 记录右上角点
-                if(_edge_right[current_idx].slope > 0.8 && _edge_right[current_idx].slope < 2.0
-                    && (_edge_right[current_idx - 2].slope < 0.3)
-                    && _edge_right[current_idx - 2].slope != 0
-                    && abs(_edge_right[current_idx].slope) != 255
-                    && abs(_edge_right[current_idx - 2].slope) != 255
-                    && _edge_right[current_idx - 2].y < _height - 50
-                    && _corner_right_up.x == 0)
-                {
-                    debug << "右上斜率" << _edge_right[current_idx].slope << endl;
-                    debug << "右上-2斜率" << _edge_right[current_idx - 2].slope << endl;
-                    _corner_right_up = _edge_right[current_idx - 2];
-                }
+                // 注意：右上角点检测需要宽度信息，将在后面进行
             }
             else
             {
@@ -539,6 +574,51 @@ void Tracking::Edge_Extract()
     for(int i = 0;i < _valid_row;i++)
     {
         _width_block.push_back(_edge_right[i].x - _edge_left[i].x);
+    }
+    
+    // ============================================ 角点检测（需要宽度信息）========================================
+    // 检测左上角点
+    for(int i = 8; i < l_height && i < static_cast<int>(_width_block.size()) && i >= 2; i++)
+    {
+        if(_corner_left_up.x == 0) // 如果还没有找到左上角点
+        {
+            bool width_condition = (_width_block[i] <= _width_block[i - 2]*0.6);
+            if((_edge_left[i].slope < _parameter.Get_Parameter("Corner_Left_Up_Slope1_Min").get<double>() 
+                && _edge_left[i].slope > _parameter.Get_Parameter("Corner_Left_Up_Slope1_Max").get<double>())
+                && (_edge_left[i - 2].slope > _parameter.Get_Parameter("Corner_Left_Up_Slope2").get<double>() 
+                && (width_condition || abs(_edge_left[i].slope) != 255)
+                && (width_condition || abs(_edge_left[i - 2].slope) != 255)
+                && _edge_left[i - 2].slope != 0 
+                && _edge_left[i - 2].y < _height - 50))
+            {
+                debug << "左上斜率" << to_string(_edge_left[i].slope) << endl;
+                debug << "左上-2斜率" << to_string(_edge_left[i - 2].slope) << endl;
+                _corner_left_up = _edge_left[i - 2];
+                break;
+            }
+        }
+    }
+    
+    // 检测右上角点
+    for(int i = 8; i < r_height && i < static_cast<int>(_width_block.size()) && i >= 2; i++)
+    {
+        if(_corner_right_up.x == 0) // 如果还没有找到右上角点
+        {
+            bool width_condition_right = (_width_block[i] <= _width_block[i - 2]*0.6);
+            if(_edge_right[i].slope > _parameter.Get_Parameter("Corner_Right_Up_Slope1_Min").get<double>() 
+                && _edge_right[i].slope < _parameter.Get_Parameter("Corner_Right_Up_Slope1_Max").get<double>()
+                && (_edge_right[i - 2].slope < _parameter.Get_Parameter("Corner_Right_Up_Slope2").get<double>())
+                && _edge_right[i - 2].slope != 0
+                && (width_condition_right || abs(_edge_right[i].slope) != 255)
+                && (width_condition_right || abs(_edge_right[i - 2].slope) != 255)
+                && _edge_right[i - 2].y < _height - 50)
+            {
+                debug << "右上斜率" << to_string(_edge_right[i].slope) << endl;
+                debug << "右上-2斜率" << to_string(_edge_right[i - 2].slope) << endl;
+                _corner_right_up = _edge_right[i - 2];
+                break;
+            }
+        }
     }
     stdev_edge_left = Variance<double, vector<double>>(l_slope);
     stdev_edge_right = Variance<double, vector<double>>(r_slope);
@@ -571,7 +651,6 @@ void Tracking::Edge_Extract()
 //                    cv::Scalar(255,0,0),  // 蓝色 (B,G,R)
 //                    -1);  // 实心圆
 //     }
-    
 //     // 绘制右边缘点（红色）
 //     for(size_t i = 0; i < _edge_right.size();i++)
 //     {
@@ -581,7 +660,6 @@ void Tracking::Edge_Extract()
 //                    cv::Scalar(0,0,255),  // 红色 (B,G,R)
 //                    -1);  // 实心圆
 //     }
-
 //     // 绘制十字补线
 //     for(size_t i = 0; i < _crossroad_left_line.size();i++)
 //     {
@@ -591,7 +669,6 @@ void Tracking::Edge_Extract()
 //                    cv::Scalar(0,255,255),  // 绿色 (B,G,R)
 //                    -1);  // 实心圆
 //     }
-
 //     // 绘制角点
 //     cv::circle(_draw_frame,
 //                cv::Point(_corner_left_down.x,_corner_left_down.y),

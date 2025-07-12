@@ -28,6 +28,12 @@ public:
     void Set_Frame(const cv::Mat& frame); // 设置帧
     void Resize_Frame(int width, int height); //设置图像大小
     bool Is_Initialized() const; // 检查是否初始化成功
+    void Print_Camera_Info() const; // 打印摄像头信息
+    int Get_Camera_Index() const; // 获取当前摄像头索引
+    double Get_Actual_FPS() const; // 获取摄像头实际帧率
+
+    int Get_Row_Cut_Up() const{return _row_cut_up;}
+    int Get_Row_Cut_Bottom() const{return _row_cut_bottom;}
 
 private:
     bool Init_Camera();
@@ -49,6 +55,9 @@ private:
 
     int _cached_threshold;   //缓存阈值
     cv::Size _cached_size;   //缓存大小
+
+    int _row_cut_up;
+    int _row_cut_bottom;
 
 };
 

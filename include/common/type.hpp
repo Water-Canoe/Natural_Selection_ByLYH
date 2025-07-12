@@ -47,6 +47,12 @@ struct POINT
 
     //赋值运算符重载
     POINT& operator=(const POINT& point){x = point.x, y = point.y, slope = point.slope;return *this;}
+    // 加法运算符重载
+    POINT& operator+=(const POINT& rhs) { x += rhs.x; y += rhs.y; return *this; }
+    // 减法运算符重载
+    POINT& operator-=(const POINT& rhs) { x -= rhs.x; y -= rhs.y; return *this; }
+    // 除法运算符重载（用于平均）
+    POINT operator/(int val) const { return POINT(x / val, y / val); }
 };
 
 

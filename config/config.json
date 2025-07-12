@@ -2,12 +2,44 @@
     "threshold": 127,
     "图像二值化阈值": 127,
     "Debug_Mode":"video",
-    "Debug_Picture_Path":"../../res/samples/sample1.jpg",
+    "Debug_Picture_Path":"../../res/samples/原始图像9.png",
     "Debug_Video_Path":"../../res/samples/sample.mp4",
-    "Image_Width":320,
-    "Image_Height":240,
+    "Image_Width":512,
+    "Image_Height":288,
     "Border":2,
     "Start_Line":3,
-    "Print_Mode":false
+    "Print_Mode":false,
+    "Motion_Enable":false,
+
+    "Camera_Index": 2,
+    "Camera_Width": 1280,
+    "Camera_Height": 720,
+    "Camera_FPS": 30,
+    "Row_Cut_Up":40,
+    "Row_Cut_Bottom":40,
+
+    "Speed_Low": 0.8,
+    "Speed_High": 0.8,
+    "Speed_Bridge": 0.8,
+    "Speed_Catering": 0.6,
+    "Speed_Layby": 0.6,
+    "Speed_Obstacle": 0.5,
+    "Speed_Parking": 0.6,
+    "Speed_Ring": 0.8,
+    "Speed_Down": 0.6,
+    "Run_P1": 2.7,
+    "Run_P2": 0.0085,
+    "Run_P3": 0.01,
+    "Turn_P": 5.0,
+    "Turn_D": 5.0,
+
+    "Corner_Left_Up_Slope1_Min": -0.35,
+    "Corner_Left_Up_Slope1_Max": -1.5,
+    "Corner_Left_Up_Slope2": -0.3,
+
+    "Corner_Right_Up_Slope1_Min": 0.35,
+    "Corner_Right_Up_Slope1_Max": 1.5,
+    "Corner_Right_Up_Slope2": 0.3
+
 
 }

@@ -119,10 +119,13 @@ void Debug::start_processing() {
 }
 
 void Debug::end_processing() {
-    // 计算图像处理时间（这里简化处理，实际应该在调用时传入处理时间）
+    // 计算图像处理时间
     auto process_end = std::chrono::high_resolution_clock::now();
     auto process_duration = std::chrono::duration<double>(process_end - current_frame_time);
     total_processing_time += process_duration.count();
+    
+    // 记录上次处理时间（毫秒）
+    last_processing_time_ms = process_duration.count() * 1000.0;
     
     // 计算帧率 - 使用当前帧时间和上一帧时间
     if (frame_count > 1) {
@@ -184,6 +187,10 @@ int Debug::get_frame_count() const {
 double Debug::get_average_processing_time_ms() const {
     if (frame_count == 0) return 0.0;
     return (total_processing_time / frame_count) * 1000.0;
+}
+
+int Debug::get_last_processing_time_ms() const {
+    return static_cast<int>(last_processing_time_ms);
 }
 
 double Debug::get_total_runtime_seconds() const {

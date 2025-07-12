@@ -38,6 +38,7 @@ private:
     double max_fps = 0.0;  // 最高帧率
     double min_fps = 999999.0;  // 最低帧率
     int frame_count = 0;  // 帧计数器
+    double last_processing_time_ms = 0.0;  // 上次处理时间（毫秒）
     
     // 日志文件相关
     std::ofstream log_file;  // 性能日志文件
@@ -174,6 +175,12 @@ public:
      * @return 平均处理时间
      */
     double get_average_processing_time_ms() const;
+    
+    /**
+     * @brief 获取上次处理时间（毫秒）
+     * @return 上次处理时间
+     */
+    int get_last_processing_time_ms() const;
     
     /**
      * @brief 获取总运行时间（秒）

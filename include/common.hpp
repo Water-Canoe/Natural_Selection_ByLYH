@@ -17,3 +17,6 @@
 
 // 调试和性能监控管理
 #include "common/debug.hpp"
+
+// 串口通信管理
+#include "common/uart.hpp"

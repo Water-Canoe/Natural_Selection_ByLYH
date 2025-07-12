@@ -34,9 +34,9 @@ public:
     const std::vector<common::POINT>& Get_Maze_Edge_Right() const { return _maze_edge_right; }
     const std::vector<common::POINT>& Get_Edge_Left() const { return _edge_left; }
     const std::vector<common::POINT>& Get_Edge_Right() const { return _edge_right; }
-    const uint16_t Get_Valid_Row() const { return _valid_row; }
-    const uint16_t Get_Height() const { return _height; }
-    const uint16_t Get_Width() const { return _width; }
+    uint16_t Get_Valid_Row() const { return _valid_row; }
+    uint16_t Get_Height() const { return _height; }
+    uint16_t Get_Width() const { return _width; }
     const std::vector<int> Get_Width_Block() const { return _width_block; }
     const common::POINT Get_Corner(Corner_Type corner_type) const{
         switch(corner_type){
@@ -58,8 +58,6 @@ private:
     std::vector<int> _width_block;   //每行色块宽度
     double stdev_edge_left; // 左边缘点方差
     double stdev_edge_right; // 右边缘点方差
-    int valid_row_left = 0; // 左边缘点有效行数
-    int valid_row_right = 0; // 右边缘点有效行数
     common::POINT garage_enable {0,0}; // 车库入口点
     uint16_t _valid_row;    //有效行数
     uint16_t row_cut_up;    //图像顶切

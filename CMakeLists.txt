@@ -23,6 +23,10 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 find_package(OpenCV REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
+# 查找libserial库
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBSERIAL REQUIRED libserial)
+
 # 收集所有源文件
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
@@ -34,10 +38,12 @@ target_include_directories(Natural_Selection PRIVATE
     include
     src
     ${OpenCV_INCLUDE_DIRS}
+    ${LIBSERIAL_INCLUDE_DIRS}
 )
 
 # 链接依赖库
 target_link_libraries(Natural_Selection
     ${OpenCV_LIBS}
     nlohmann_json::nlohmann_json
+    ${LIBSERIAL_LIBRARIES}
 )

@@ -33,6 +33,8 @@ public:
     bool _obstaclee_flag;   // 障碍标志位
     bool _zebra_flag;       // 斑马线标志位
 
+    float _middle_error;      // 中间线误差
+
 
 
 
@@ -41,11 +43,29 @@ public:
 
     Scene Recognition_Element(Tracking &tracking);
     void Draw_Edge(Tracking &tracking);
+    float Get_Middle_Error(Tracking &tracking);
+
+private:
+    /**
+     * @brief 应用补线到边线中
+     * @param current_y 当前边线点的Y坐标
+     * @param supplement_line 补线点集
+     * @param supplement_index 补线索引（引用，会被更新）
+     * @return 是否成功应用补线
+     */
+    bool Apply_Supplement_Line(int current_y, const std::vector<common::POINT>& supplement_line, int& supplement_index);
 
 private:
     Scene scene;    // 场景
     std::vector<common::POINT> _crossroad_left_line;   // 十字左补线
     std::vector<common::POINT> _crossroad_right_line;  // 十字右补线
+    std::vector<common::POINT> _obstacle_left_line;   // 障碍物左补线
+    std::vector<common::POINT> _obstacle_right_line;  // 障碍物右补线
+
+    std::vector<common::POINT> _left_line;
+    std::vector<common::POINT> _right_line;
+    std::vector<common::POINT> _middle_line;
+
 
 };
 
