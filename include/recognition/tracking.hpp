@@ -38,6 +38,8 @@ public:
     uint16_t Get_Height() const { return _height; }
     uint16_t Get_Width() const { return _width; }
     const std::vector<int> Get_Width_Block() const { return _width_block; }
+    const std::vector<common::POINT>& Get_Lost_Left() const { return _lost_left; }
+    const std::vector<common::POINT>& Get_Lost_Right() const { return _lost_right; }
     const common::POINT Get_Corner(Corner_Type corner_type) const{
         switch(corner_type){
             case LEFT_UP: return _corner_left_up;
@@ -53,6 +55,8 @@ private:
     std::vector<common::POINT> _maze_edge_right; // 迷宫右边线点集
     std::vector<common::POINT> _edge_left;  // 左边缘点赛道左边缘点集
     std::vector<common::POINT> _edge_right; // 右边缘点赛道右边缘点集
+    std::vector<common::POINT> _lost_left; // 左边缘点丢失点集
+    std::vector<common::POINT> _lost_right; // 右边缘点丢失点集
     //std::vector<common::POINT> _width_block;   //每行色块宽度
     std::vector<common::POINT> _spurroad;   // 岔路信息
     std::vector<int> _width_block;   //每行色块宽度

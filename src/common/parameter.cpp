@@ -24,6 +24,7 @@ void Parameter::Load_Config()
     _debug_mode = _config["Debug_Mode"];
     _debug_picture_path = _config["Debug_Picture_Path"];
     _debug_video_path = _config["Debug_Video_Path"];
+    _video_delay = _config["Video_Delay"];
     _image_width = _config["Image_Width"];
     _image_height = _config["Image_Height"];
     _row_cut_up = _config["Row_Cut_Up"];

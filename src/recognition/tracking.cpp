@@ -487,6 +487,8 @@ void Tracking::Edge_Extract()
         {
             l_heighest_point = _maze_edge_left[i];
             _edge_left.push_back(l_heighest_point);
+            if(_edge_left[i].x == _border)
+                _lost_left.push_back(_edge_left[i]);
             l_height++;
             
             // 计算斜率、角点（从第8个点开始）
@@ -533,6 +535,8 @@ void Tracking::Edge_Extract()
         {
             r_heighest_point = _maze_edge_right[i];
             _edge_right.push_back(r_heighest_point);
+            if(_edge_right[i].x == _width - _border)
+                _lost_right.push_back(_edge_right[i]);
             r_height++;
             
             // 计算斜率、角点
@@ -575,7 +579,7 @@ void Tracking::Edge_Extract()
     {
         _width_block.push_back(_edge_right[i].x - _edge_left[i].x);
     }
-    
+
     // ============================================ 角点检测（需要宽度信息）========================================
     // 检测左上角点
     for(int i = 8; i < l_height && i < static_cast<int>(_width_block.size()) && i >= 2; i++)

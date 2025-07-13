@@ -61,6 +61,11 @@ private:
     std::vector<common::POINT> _crossroad_right_line;  // 十字右补线
     std::vector<common::POINT> _obstacle_left_line;   // 障碍物左补线
     std::vector<common::POINT> _obstacle_right_line;  // 障碍物右补线
+    std::vector<common::POINT> _ring_left_line_in;   // 环岛左补线入
+    std::vector<common::POINT> _ring_right_line_in;  // 环岛右补线入
+    std::vector<common::POINT> _ring_left_line_out;   // 环岛左补线出
+    std::vector<common::POINT> _ring_right_line_out;  // 环岛右补线出
+
 
     std::vector<common::POINT> _left_line;
     std::vector<common::POINT> _right_line;

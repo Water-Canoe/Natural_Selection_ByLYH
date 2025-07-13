@@ -34,3 +34,12 @@ git commit -m "你的提交信息"
 
 # 3. 推送到GitHub
 git push origin main
+
+
+
+#debug_mode
+1. picture  并且在picture_path配置好图片路径
+2. video    main.cpp里，
+3. camera 实际执行摄像头
+
+#调参

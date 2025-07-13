@@ -109,6 +109,7 @@ int main()
                     break;
                 case recognition::Scene::RingScene:
                     scene = "RingScene";
+                    element._ring_flag = true;
                     debug.force_outputln("检测到场景：环岛"+to_string(debug.get_frame_count()));
                     break;
                 case recognition::Scene::ObstacleScene:
@@ -125,6 +126,7 @@ int main()
                     // 这些场景暂时不处理
                     break;
             }
+            // ----添加AI计算部分---
             middle_error = element.Get_Middle_Error(tracker);  // 获取中心点误差
             //control_center.Fitting(tracker); // 拟合中心线
             element.Draw_Edge(tracker);  // 绘制边缘
@@ -144,6 +146,12 @@ int main()
         // }
         // else
         //     motion_cnt ++;
+
+
+
+
+
+        
         // ========================================== 图像显示 ==========================================
         // 获取图像并检查是否为空
         cv::Mat original_frame = tracker._camera.Get_Frame();
@@ -199,7 +207,8 @@ int main()
                       << processing_time_ms << " ms, 延时: " << delay_ms << " ms" << std::endl;
             }
             
-            this_thread::sleep_for(chrono::milliseconds(delay_ms));
+            // this_thread::sleep_for(chrono::milliseconds(tracker._camera._video_delay));   //video、picture模式使用，越小播放视频越快
+            this_thread::sleep_for(chrono::milliseconds(delay_ms));  //camera模式使用，根据帧率动态调整播放速度
         }
         else
         {

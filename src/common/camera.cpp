@@ -266,6 +266,7 @@ void Camera::Load_Config()
             _cached_size = cv::Size(width, height);
             _row_cut_up = _parameter.Get_Parameter("Row_Cut_Up").get<int>();
             _row_cut_bottom = _parameter.Get_Parameter("Row_Cut_Bottom").get<int>();
+            _video_delay = _parameter.Get_Parameter("Video_Delay").get<int>();
         } catch (const std::exception& e) {
             std::cerr << "Failed to load cached parameters: " << e.what() << std::endl;
             // 使用默认值

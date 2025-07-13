@@ -7,6 +7,104 @@ using namespace std;
 namespace control{
 
 
+/**
+ * @brief 计算中心点，用于单边情况
+ * @param points_edge 边缘点
+ * @param side 单边情况
+ * @param tracking 跟踪器
+ * @return 中心点
+ */
+vector<POINT> Center_Compute(vector<POINT> points_edge,int side,Tracking& tracking)
+{
+    int step = 4;   // 步长
+    int off_set_width = tracking.Get_Width() / 2;   //首行偏移量
+    int off_set_height = 0;     //纵向偏移量
+    int border = 2;  // 边框宽度，从配置文件获取
+    vector<POINT> center_v;
+    
+    if(side == 0)   //左单边可见
+    {
+        uint16_t counter = 0, rowStart = 0;
+        for(size_t i = 0; i < points_edge.size(); i++)
+        {
+            // 修复：考虑边框，检查点是否在有效区域内
+            if(points_edge[i].x > border)
+            {
+                counter ++;
+                if(counter > 2)
+                {
+                    rowStart = i - 2;
+                    break;
+                }
+                else
+                    counter = 0;
+            }
+        }
+        // 计算纵向偏移量
+        off_set_height = points_edge[rowStart].y - points_edge[0].y;
+        counter = 0;
+        // 从有效行开始，每隔step个点计算一个中心点
+        for(size_t i = rowStart; i < points_edge.size();i+=step)
+        {
+            int px = points_edge[i].x + off_set_width;
+            // 修复：考虑边框的边界检查
+            if(px > tracking.Get_Width() - border - 1)
+            {
+                counter ++;
+                if(counter > 2)
+                    break;
+            }
+            else
+            {
+                counter = 0;
+                // 修复：POINT构造函数参数顺序应该是(x, y)，不是(y, x)
+                center_v.emplace_back(px, points_edge[i].y - off_set_height);
+            }
+        }
+    }
+    else if(side == 1)   //右单边可见
+    {
+        uint16_t counter = 0, rowStart = 0;
+        for(size_t i = 0; i < points_edge.size(); i++)
+        {
+            // 修复：考虑边框，检查点是否在有效区域内
+            if(points_edge[i].x < tracking.Get_Width() - border - 1)
+            {
+                counter ++;
+                if(counter > 2)
+                {
+                    rowStart = i - 2;
+                    break;
+                }
+                else
+                    counter = 0;
+            }
+        }
+        // 计算纵向偏移量
+        off_set_height = points_edge[rowStart].y - points_edge[0].y;
+        counter = 0;
+        // 从有效行开始，每隔step个点计算一个中心点
+        for(size_t i = rowStart; i < points_edge.size();i+=step)
+        {
+            int px = tracking.Get_Width() - points_edge[i].x - off_set_width;
+            // 修复：考虑边框的边界检查
+            if(px < border + 1)
+            {
+                counter ++;
+                if(counter > 2)
+                    break;
+            }
+            else
+            {
+                counter = 0;
+                // 修复：POINT构造函数参数顺序应该是(x, y)，不是(y, x)
+                center_v.emplace_back(px, points_edge[i].y - off_set_height);
+            }
+        }
+    }
+    return center_v;
+}
+
 void ControlCenter::Fitting(Tracking& tracking)
 {
     _sigma_center = 0;
@@ -16,8 +114,9 @@ void ControlCenter::Fitting(Tracking& tracking)
     _style = "STRAIGHT";
 
     // ========================================================== 计算赛贝尔曲线控制点 ==========================================================
-    // 计算赛贝尔曲线控制点(双边情况)
-    if(tracking.Get_Edge_Left().size() > 20 && tracking.Get_Edge_Right().size() > 20)
+    // 双边情况
+    if(tracking.Get_Edge_Left().size() > 20 && tracking.Get_Edge_Right().size() > 20
+        && tracking.Get_Lost_Left().size() < 10 && tracking.Get_Lost_Right().size() < 10)
     {
         //起点位置中心点
         v_center[0] = {
@@ -40,6 +139,37 @@ void ControlCenter::Fitting(Tracking& tracking)
         _center_edge = Bazier(0.03,v_center);
         _style = "STRAIGHT";
     }
+    // // 左单边情况
+    // else if(tracking.Get_Edge_Left().size() > 20 && tracking.Get_Lost_Left().size() < 10
+    //     && tracking.Get_Edge_Right().size() < 20 && tracking.Get_Lost_Right().size() > 10
+    // {
+
+
+    // }
+    else
+    {
+        //起点位置中心点
+        v_center[0] = {
+            (tracking.Get_Edge_Left()[0].x + tracking.Get_Edge_Right()[0].x) / 2,
+            (tracking.Get_Edge_Left()[0].y + tracking.Get_Edge_Right()[0].y) / 2};
+        //1/3位置中心点
+        v_center[1] = {
+            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() / 3].x + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() / 3].x) / 2,
+            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() / 3].y + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() / 3].y) / 2};
+        //2/3位置中心点
+        v_center[2] = {
+            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() * 2 / 3].x + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() * 2 / 3].x) / 2,
+            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() * 2 / 3].y + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() * 2 / 3].y) / 2};
+        //90%位置中心点
+        v_center[3] = {
+            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() * 9 / 10].x + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() * 9 / 10].x) / 2,
+            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() * 9 / 10].y + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() * 9 / 10].y) / 2};
+        
+        //使用贝塞尔曲线拟合平滑中心线，步长0.03表示曲线平滑度
+        _center_edge = Bazier(0.03,v_center);
+        _style = "STRAIGHT";
+    }
+
 
     // ========================================================== 加权控制中心算法 ==========================================================
     int control_num = 1;    // 权重累加器
@@ -84,10 +214,6 @@ void ControlCenter::Fitting(Tracking& tracking)
     {
         _sigma_center = 1000;
     }
-    
-    
-
-
 }
 
 }

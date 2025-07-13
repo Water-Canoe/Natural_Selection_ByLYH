@@ -33,8 +33,8 @@ public:
     float _speed_ring; //环岛速度
     float _speed_down; //特殊元素<慢行区>速度
     float _run_p1; //一阶比例系数：直线控制量
-    float _run_p2; //二阶比例系数：直线控制量
-    float _run_p3; //三阶比例系数：直线控制量
+    float _run_p2; //二阶比例系数：弯道控制量
+    float _run_p3; //三阶比例系数：弯道控制量
     float _turn_p; //一阶比例系数：转向控制量
     float _turn_d; //一阶微分系数：转向控制量
 

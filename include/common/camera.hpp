@@ -15,6 +15,7 @@ public:
         VIDEO,
         PICTURE
     };
+    int _video_delay;
     
     Camera();
     ~Camera();
@@ -58,6 +59,8 @@ private:
 
     int _row_cut_up;
     int _row_cut_bottom;
+
+
 
 };
 

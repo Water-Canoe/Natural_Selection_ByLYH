@@ -33,16 +33,18 @@ Scene Element::Recognition_Element(Tracking &tracking)
     scene = Scene::NolmalScene;
 
     uint8_t zebra_cnt[2] = {0,0};//斑马线计数
-    // uint8_t zebra_flag = 0;//斑马线识别标志  // 暂时注释掉未使用的变量
+    // uint8_t zebra_flag = 0;//斑马线识别标志
 
     uint8_t crossroad_cnt[2] = {0,0};//十字路口计数
-    // uint8_t crossroad_flag = 0;//十字路口识别标志  // 暂时注释掉未使用的变量
+    // uint8_t crossroad_flag = 0;//十字路口识别标志
 
     uint8_t obstacle_cnt[4] = {0,0,0,0};//障碍物计数
-    // uint8_t obstacle_flag = 0;//障碍物识别标志  // 暂时注释掉未使用的变量
+    // uint8_t obstacle_flag = 0;//障碍物识别标志
 
-    // uint16_t ring_cnt = 0;//环岛计数  // 暂时注释掉未使用的变量
-    // uint8_t ring_flag = 0;//环岛识别标志  // 暂时注释掉未使用的变量
+    uint8_t ring_cnt[4] = {0,0,0,0};//环岛计数
+    static uint8_t ring_left_cnt[2] = {0,0};//环岛左计数
+    static uint8_t ring_right_cnt[2] = {0,0};//环岛右计数
+    static uint8_t ring_frame_cnt = 0;//环岛帧计数
 
     // 更新补线信息
     _crossroad_left_line.clear();
@@ -208,12 +210,108 @@ Scene Element::Recognition_Element(Tracking &tracking)
             return Scene::ObstacleScene;
         }
 
-        // =========================================环岛识别========================================
-
-        
-
-        // 障碍物补线
-
+        // =========================================环岛入识别========================================
+        // 1.赛道宽度突变
+        if(tracking.Get_Width_Block()[i] > tracking.Get_Width() * 0.7 && tracking.Get_Width_Block()[i] < tracking.Get_Width() * 0.8)
+        {
+            ring_cnt[0]++;
+        }
+        // 2.存在一侧丢线
+        if(ring_cnt[0] > 20)
+        {
+            if(tracking.Get_Lost_Left().size() > 10 && tracking.Get_Lost_Right().size() < 10)
+            {
+                ring_cnt[1]++;
+            }
+            if(tracking.Get_Lost_Right().size() > 10 && tracking.Get_Lost_Left().size() < 10)
+            {
+                ring_cnt[2]++;
+            }
+        }
+        // 3.存在一侧角点
+        if(ring_cnt[1] > 0)
+        {
+            if(tracking.Get_Corner(LEFT_DOWN).y > 20 && tracking.Get_Corner(RIGHT_DOWN).y < 20)
+            {
+                ring_left_cnt[0]++;
+            }
+        }
+        if(ring_cnt[2] > 0)
+        {
+            if(tracking.Get_Corner(RIGHT_DOWN).y > 20 && tracking.Get_Corner(LEFT_DOWN).y < 20)
+            {
+                ring_right_cnt[0]++;
+            }
+        }
+        if(ring_left_cnt[0] > 0 && tracking.Get_Corner(LEFT_UP).y > 20)
+        {
+            vector<POINT> ring_bezier(3);
+            ring_bezier[0] = tracking.Get_Edge_Left()[2];
+            ring_bezier[1] = {
+                (tracking.Get_Edge_Left()[2].x + tracking.Get_Corner(LEFT_UP).x) * 2 / 3,
+                (tracking.Get_Edge_Left()[2].y + tracking.Get_Corner(LEFT_UP).y) / 2};
+            ring_bezier[2] = tracking.Get_Corner(LEFT_UP);
+            _ring_left_line_in = Bazier(1.0f / abs(ring_bezier[0].y - ring_bezier[2].y),ring_bezier);
+            return Scene::RingScene;
+        }
+        if(ring_right_cnt[0] > 0 && tracking.Get_Corner(RIGHT_UP).y > 20)
+        {
+            vector<POINT> ring_bezier(3);
+            ring_bezier[0] = tracking.Get_Edge_Right()[2];
+            ring_bezier[1] = {
+                (tracking.Get_Edge_Right()[2].x + tracking.Get_Corner(RIGHT_UP).x) * 1 / 3,
+                (tracking.Get_Edge_Right()[2].y + tracking.Get_Corner(RIGHT_UP).y) / 2};
+            ring_bezier[2] = tracking.Get_Corner(RIGHT_UP);
+            _ring_right_line_in = Bazier(1.0f / abs(ring_bezier[0].y - ring_bezier[2].y),ring_bezier);
+            return Scene::RingScene;
+        }
+        // ========================================= 环岛出识别 ========================================
+        // 环岛左出
+        if(ring_left_cnt[0] > 0 && tracking.Get_Edge_Left().size() < tracking.Get_Height() * 2/3)
+        {
+            ring_left_cnt[1]++;
+        }
+        if(ring_left_cnt[1] > 0 && tracking.Get_Corner(RIGHT_DOWN).y < 20 && tracking.Get_Width_Block()[i] > tracking.Get_Width() * 0.9)
+        {
+            vector<POINT> ring_bezier(3);
+            ring_bezier[0] = tracking.Get_Edge_Left()[2];
+            ring_bezier[1] = {
+                (tracking.Get_Edge_Left()[2].x + tracking.Get_Corner(RIGHT_DOWN).x) * 2 / 3,
+                (tracking.Get_Edge_Left()[2].y + tracking.Get_Corner(RIGHT_DOWN).y) / 2};
+            ring_bezier[2] = tracking.Get_Edge_Right()[tracking.Get_Valid_Row() - 1];
+            _ring_left_line_out = Bazier(1.0f / abs(ring_bezier[0].y - ring_bezier[2].y),ring_bezier);
+            ring_frame_cnt++;
+            if(ring_frame_cnt > 20)
+            {
+                ring_left_cnt[0] = 0;
+                ring_left_cnt[1] = 0;
+                ring_frame_cnt = 0;
+                return Scene::RingScene;
+            }
+        }
+        // 环岛右出
+        if(ring_right_cnt[0] > 0 && tracking.Get_Edge_Right().size() < tracking.Get_Height() * 2/3)
+        {
+            ring_right_cnt[1]++;
+        }
+        if(ring_right_cnt[1] > 0 && tracking.Get_Corner(LEFT_DOWN).y < 20 && tracking.Get_Width_Block()[i] > tracking.Get_Width() * 0.9)
+        {
+            vector<POINT> ring_bezier(3);
+            ring_bezier[0] = tracking.Get_Edge_Right()[2];
+            ring_bezier[1] = {
+                (tracking.Get_Edge_Right()[2].x + tracking.Get_Corner(LEFT_DOWN).x) * 2 / 3,
+                (tracking.Get_Edge_Right()[2].y + tracking.Get_Corner(LEFT_DOWN).y) / 2};
+            ring_bezier[2] = tracking.Get_Edge_Left()[tracking.Get_Valid_Row() - 1];
+            _ring_right_line_out = Bazier(1.0f / abs(ring_bezier[0].y - ring_bezier[2].y),ring_bezier);
+            ring_frame_cnt++;
+            if(ring_frame_cnt > 2)
+            {
+                ring_right_cnt[0] = 0;
+                ring_right_cnt[1] = 0;
+                ring_frame_cnt = 0;
+                return Scene::RingScene;
+            }
+        }
     }
     return Scene::NolmalScene;
 }
@@ -262,6 +360,8 @@ float Element::Get_Middle_Error(Tracking &tracking)
     int crossroad_right_index = 0;
     int obstacle_left_index = 0;
     int obstacle_right_index = 0;
+    int ring_left_index = 0;
+    int ring_right_index = 0;
 
     for(int i = 0;i < tracking.Get_Valid_Row();i++)
     {
@@ -275,6 +375,23 @@ float Element::Get_Middle_Error(Tracking &tracking)
         if(Apply_Supplement_Line(_right_line[i].y, _crossroad_right_line, crossroad_right_index))
         {
             _right_line[i] = _crossroad_right_line[crossroad_right_index-1];
+        }
+        //================================环岛补线========================================
+        if(Apply_Supplement_Line(_left_line[i].y, _ring_left_line_in, ring_left_index))
+        {
+            _left_line[i] = _ring_left_line_in[ring_left_index-1];
+        }
+        if(Apply_Supplement_Line(_right_line[i].y, _ring_right_line_in, ring_right_index))
+        {
+            _right_line[i] = _ring_right_line_in[ring_right_index-1];
+        }
+        if(Apply_Supplement_Line(_left_line[i].y, _ring_left_line_out, ring_left_index))
+        {
+            _left_line[i] = _ring_left_line_out[ring_left_index-1];
+        }
+        if(Apply_Supplement_Line(_right_line[i].y, _ring_right_line_out, ring_right_index))
+        {
+            _right_line[i] = _ring_right_line_out[ring_right_index-1];
         }
         //================================障碍物补线========================================
         if(Apply_Supplement_Line(_left_line[i].y, _obstacle_left_line, obstacle_left_index))

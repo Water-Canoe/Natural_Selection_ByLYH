@@ -24,6 +24,7 @@ private:
     std::string _debug_mode; //调试模式
     std::string _debug_picture_path; //调试图片路径
     std::string _debug_video_path; //调试视频路径
+    int _video_delay; //视频延时
     int _image_width; //图像宽度
     int _image_height; //图像高度
     int _row_cut_up; //图像顶切
