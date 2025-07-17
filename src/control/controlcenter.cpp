@@ -105,7 +105,7 @@ vector<POINT> Center_Compute(vector<POINT> points_edge,int side,Tracking& tracki
     return center_v;
 }
 
-void ControlCenter::Fitting(Tracking& tracking)
+void ControlCenter::Fitting(Tracking& tracking,Element& element)
 {
     _sigma_center = 0;
     _control_center = tracking.Get_Width() / 2;
@@ -116,24 +116,25 @@ void ControlCenter::Fitting(Tracking& tracking)
     // ========================================================== 计算赛贝尔曲线控制点 ==========================================================
     // 双边情况
     if(tracking.Get_Edge_Left().size() > 20 && tracking.Get_Edge_Right().size() > 20
-        && tracking.Get_Lost_Left().size() < 10 && tracking.Get_Lost_Right().size() < 10)
+        && tracking.Get_Lost_Left().size() < 15 && tracking.Get_Lost_Right().size() < 15)
+
     {
         //起点位置中心点
         v_center[0] = {
-            (tracking.Get_Edge_Left()[0].x + tracking.Get_Edge_Right()[0].x) / 2,
-            (tracking.Get_Edge_Left()[0].y + tracking.Get_Edge_Right()[0].y) / 2};
+            (element._left_line[0].x + element._right_line[0].x) / 2,
+            (element._left_line[0].y + element._right_line[0].y) / 2};
         //1/3位置中心点
         v_center[1] = {
-            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() / 3].x + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() / 3].x) / 2,
-            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() / 3].y + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() / 3].y) / 2};
+            (element._left_line[element._left_line.size() / 3].x + element._right_line[element._right_line.size() / 3].x) / 2,
+            (element._left_line[element._left_line.size() / 3].y + element._right_line[element._right_line.size() / 3].y) / 2};
         //2/3位置中心点
         v_center[2] = {
-            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() * 2 / 3].x + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() * 2 / 3].x) / 2,
-            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() * 2 / 3].y + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() * 2 / 3].y) / 2};
+            (element._left_line[element._left_line.size() * 2 / 3].x + element._right_line[element._right_line.size() * 2 / 3].x) / 2,
+            (element._left_line[element._left_line.size() * 2 / 3].y + element._right_line[element._right_line.size() * 2 / 3].y) / 2};
         //90%位置中心点
         v_center[3] = {
-            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() * 9 / 10].x + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() * 9 / 10].x) / 2,
-            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() * 9 / 10].y + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() * 9 / 10].y) / 2};
+            (element._left_line[element._left_line.size() * 9 / 10].x + element._right_line[element._right_line.size() * 9 / 10].x) / 2,
+            (element._left_line[element._left_line.size() * 9 / 10].y + element._right_line[element._right_line.size() * 9 / 10].y) / 2};
         
         //使用贝塞尔曲线拟合平滑中心线，步长0.03表示曲线平滑度
         _center_edge = Bazier(0.03,v_center);
@@ -143,36 +144,43 @@ void ControlCenter::Fitting(Tracking& tracking)
     // else if(tracking.Get_Edge_Left().size() > 20 && tracking.Get_Lost_Left().size() < 10
     //     && tracking.Get_Edge_Right().size() < 20 && tracking.Get_Lost_Right().size() > 10
     // {
-
+    // }
+    //左单边情况
+    // else if(tracking.Get_Lost_Right() > 10 && tracking.Get_Lost_Left() < 10)
+    // {
 
     // }
-    else
+    // //右单边情况
+    // else if()
+    // {
+
+    // }
+    else    //暂时都以双边策略
     {
         //起点位置中心点
         v_center[0] = {
-            (tracking.Get_Edge_Left()[0].x + tracking.Get_Edge_Right()[0].x) / 2,
-            (tracking.Get_Edge_Left()[0].y + tracking.Get_Edge_Right()[0].y) / 2};
+            (element._left_line[0].x + element._right_line[0].x) / 2,
+            (element._left_line[0].y + element._right_line[0].y) / 2};
         //1/3位置中心点
         v_center[1] = {
-            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() / 3].x + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() / 3].x) / 2,
-            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() / 3].y + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() / 3].y) / 2};
+            (element._left_line[element._left_line.size() / 3].x + element._right_line[element._right_line.size() / 3].x) / 2,
+            (element._left_line[element._left_line.size() / 3].y + element._right_line[element._right_line.size() / 3].y) / 2};
         //2/3位置中心点
         v_center[2] = {
-            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() * 2 / 3].x + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() * 2 / 3].x) / 2,
-            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() * 2 / 3].y + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() * 2 / 3].y) / 2};
+            (element._left_line[element._left_line.size() * 2 / 3].x + element._right_line[element._right_line.size() * 2 / 3].x) / 2,
+            (element._left_line[element._left_line.size() * 2 / 3].y + element._right_line[element._right_line.size() * 2 / 3].y) / 2};
         //90%位置中心点
         v_center[3] = {
-            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() * 9 / 10].x + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() * 9 / 10].x) / 2,
-            (tracking.Get_Edge_Left()[tracking.Get_Edge_Left().size() * 9 / 10].y + tracking.Get_Edge_Right()[tracking.Get_Edge_Right().size() * 9 / 10].y) / 2};
+            (element._left_line[element._left_line.size() * 9 / 10].x + element._right_line[element._right_line.size() * 9 / 10].x) / 2,
+            (element._left_line[element._left_line.size() * 9 / 10].y + element._right_line[element._right_line.size() * 9 / 10].y) / 2};
         
         //使用贝塞尔曲线拟合平滑中心线，步长0.03表示曲线平滑度
         _center_edge = Bazier(0.03,v_center);
         _style = "STRAIGHT";
     }
 
-
     // ========================================================== 加权控制中心算法 ==========================================================
-    int control_num = 1;    // 权重累加器
+    int control_num = 1;    // 权重累加器(关注远端)
     for(auto p:_center_edge)
     {
         if(p.y < tracking.Get_Height() / 2) //在图像上半部分

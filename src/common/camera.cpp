@@ -69,13 +69,13 @@ Camera::~Camera()
 bool Camera::Init()
 {
     try{
-        std::string debug_mode = _parameter.Get_Parameter("Debug_Mode").get<string>();
-        if(debug_mode == "picture")
+        _debug_mode = _parameter.Get_Parameter("Debug_Mode").get<string>();
+        if(_debug_mode == "picture")
         {
             _input_mode = InputMode::PICTURE;
             return Init_Picture();
         }
-        else if(debug_mode == "video")
+        else if(_debug_mode == "video")
         {
             _input_mode = InputMode::VIDEO;
             return Init_Video();

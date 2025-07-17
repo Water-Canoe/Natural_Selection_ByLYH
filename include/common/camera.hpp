@@ -10,6 +10,8 @@ namespace common
 class Camera
 {
 public:
+    std::string _debug_mode; 
+
     enum class InputMode {
         CAMERA,
         VIDEO,

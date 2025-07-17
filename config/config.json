@@ -1,14 +1,15 @@
 {
     "threshold": 127,
     "图像二值化阈值": 127,
-    "Debug_Mode":"camera",
-    "Debug_Picture_Path":"../../res/samples/原始图像.png",
+    "Debug_Mode":"video",
+    "Debug_Picture_Path":"../../res/samples/环岛1.png",
     "Debug_Video_Path":"../../res/samples/sample.mp4",
-    "Video_Delay":10,
+    "Video_Delay":30,
     "Image_Width":512,
     "Image_Height":288,
     "Border":2,
     "Start_Line":3,
+
     "Print_Mode":false,
     "Motion_Enable":false,
 

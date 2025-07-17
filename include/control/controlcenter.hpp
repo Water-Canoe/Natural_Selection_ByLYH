@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common.hpp"
-#include "recognition/tracking.hpp"
+#include "recognition.hpp"
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -20,7 +20,7 @@ public:
     uint16_t _right_valid_row = 0;  //右边有效行数
     double _sigma_center = 0;       //中心线方差
 
-    void Fitting(recognition::Tracking& tracking);
+    void Fitting(recognition::Tracking& tracking,recognition::Element& element);
 
 
 private:

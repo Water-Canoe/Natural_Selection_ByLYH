@@ -34,6 +34,10 @@ public:
     bool _zebra_flag;       // 斑马线标志位
 
     float _middle_error;      // 中间线误差
+    
+    std::vector<common::POINT> _left_line;
+    std::vector<common::POINT> _right_line;
+    std::vector<common::POINT> _middle_line;
 
 
 
@@ -55,7 +59,6 @@ private:
      */
     bool Apply_Supplement_Line(int current_y, const std::vector<common::POINT>& supplement_line, int& supplement_index);
 
-private:
     Scene scene;    // 场景
     std::vector<common::POINT> _crossroad_left_line;   // 十字左补线
     std::vector<common::POINT> _crossroad_right_line;  // 十字右补线
@@ -66,10 +69,6 @@ private:
     std::vector<common::POINT> _ring_left_line_out;   // 环岛左补线出
     std::vector<common::POINT> _ring_right_line_out;  // 环岛右补线出
 
-
-    std::vector<common::POINT> _left_line;
-    std::vector<common::POINT> _right_line;
-    std::vector<common::POINT> _middle_line;
 
 
 };
